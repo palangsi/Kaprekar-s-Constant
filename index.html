@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaprekar's Constant 6174</title>
+    <!-- Load Tailwind CSS from CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a clean, mathematical look */
+        .container {
+            max-width: 600px;
+        }
+        .step-box {
+            background-color: #f7f9fb;
+            border-left: 4px solid #4f46e5;
+        }
+        .descending {
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+        .ascending {
+            font-weight: 700;
+            color: #b91c1c;
+        }
+        .result-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #059669;
+        }
+    </style>
+    <script>
+        // Set the global constant
+        const KAPREKAR_CONSTANT = 6174;
+
+        /**
+         * Pads a number with leading zeros to ensure it is 4 digits long.
+         * @param {number} num - The number to pad.
+         * @returns {string} The 4-digit zero-padded string.
+         */
+        function padNumber(num) {
+            return String(num).padStart(4, '0');
+        }
+
+        /**
+         * Performs the Kaprekar Routine for a given 4-digit number.
+         * @param {string} startNumber - The 4-digit number string to start with.
+         */
+        function runKaprekarRoutine(startNumber) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; // Clear previous results
+            const startInput = document.getElementById('startNumber');
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = '';
+            
+            let num = parseInt(startNumber, 10);
+            let history = new Set();
+            let stepCount = 0;
+
+            // --- Validation ---
+            if (startNumber.length !== 4 || isNaN(num) || num < 1000) {
+                messageDiv.textContent = "Please enter a valid 4-digit number (1000-9999).";
+                messageDiv.classList.remove('hidden', 'text-green-600');
+                messageDiv.classList.add('text-red-600');
+                return;
+            }
+
+            const digits = startNumber.split('');
+            const firstDigit = digits[0];
+            if (digits.every(d => d === firstDigit)) {
+                messageDiv.textContent = `The number ${startNumber} (repdigit) reduces immediately to 0 after the first step (${startNumber} - ${startNumber} = 0). It does not enter the 6174 routine.`;
+                messageDiv.classList.remove('hidden', 'text-green-600');
+                messageDiv.classList.add('text-yellow-600');
+                return;
+            }
+            
+            messageDiv.textContent = `Starting routine with ${startNumber}...`;
+            messageDiv.classList.remove('hidden', 'text-red-600', 'text-yellow-600');
+            messageDiv.classList.add('text-green-600');
+            startInput.value = ''; // Clear input on success
+
+            // --- Main Loop ---
+            while (num !== KAPREKAR_CONSTANT && stepCount < 10) { // Limit steps for safety
+                if (history.has(num)) {
+                    messageDiv.textContent = `An unexpected loop was found starting at ${padNumber(num)}. This should only happen for repdigits, or if an error occurred.`;
+                    messageDiv.classList.add('text-red-600');
+                    break;
+                }
+                history.add(num);
+                stepCount++;
+
+                const currentDigits = padNumber(num).split('').map(Number);
+
+                // Sort for largest (descending)
+                const descArr = [...currentDigits].sort((a, b) => b - a);
+                const descendingNum = parseInt(descArr.join(''), 10);
+
+                // Sort for smallest (ascending)
+                const ascArr = [...currentDigits].sort((a, b) => a - b);
+                const ascendingNum = parseInt(ascArr.join(''), 10);
+
+                const difference = descendingNum - ascendingNum;
+                
+                // Build the step HTML
+                const stepHtml = `
+                    <div class="step-box p-4 mb-4 rounded-lg shadow-md transition duration-300">
+                        <p class="text-sm font-medium text-gray-500 mb-2">Step ${stepCount} (Starting from: ${padNumber(num)})</p>
+                        <div class="flex flex-col sm:flex-row justify-between items-center sm:space-x-4 space-y-2 sm:space-y-0 text-lg">
+                            <span class="descending">${padNumber(descendingNum)}</span>
+                            <span class="text-gray-500">-</span>
+                            <span class="ascending">${padNumber(ascendingNum)}</span>
+                            <span class="text-gray-500">=</span>
+                            <span class="result-number">${padNumber(difference)}</span>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.innerHTML += stepHtml;
+                
+                if (difference === KAPREKAR_CONSTANT) {
+                    messageDiv.textContent = `Success! The routine reached Kaprekar's Constant (6174) in ${stepCount} steps.`;
+                    messageDiv.classList.remove('text-red-600', 'text-yellow-600');
+                    messageDiv.classList.add('text-green-600');
+                    break;
+                }
+
+                num = difference; // Prepare for the next iteration
+            }
+
+            if (stepCount >= 10 && num !== KAPREKAR_CONSTANT) {
+                messageDiv.textContent = "The routine exceeded the safe limit of 10 steps without reaching 6174. Check the starting number or calculations.";
+                messageDiv.classList.add('text-red-600');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('kaprekarForm');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const startNumber = document.getElementById('startNumber').value.trim();
+                runKaprekarRoutine(startNumber);
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
+
+    <div class="container mx-auto bg-white p-6 sm:p-10 rounded-xl shadow-2xl">
+        
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-2 text-center">
+            Kaprekar's Constant (<span class="text-indigo-600">6174</span>)
+        </h1>
+        <p class="text-center text-gray-500 mb-8 max-w-md mx-auto">
+            Enter any four-digit number (digits must not all be identical) and watch it reduce to the constant **6174** in seven steps or less.
+        </p>
+
+        <!-- Input Form -->
+        <form id="kaprekarForm" class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+            <input 
+                type="number" 
+                id="startNumber" 
+                placeholder="e.g., 8721 or 6432"
+                min="1000"
+                max="9999"
+                required
+                class="w-full sm:w-64 p-3 border-2 border-indigo-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg shadow-inner transition duration-150"
+            />
+            <button 
+                type="submit" 
+                class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105 active:scale-95"
+            >
+                Run Routine
+            </button>
+        </form>
+
+        <!-- Message/Status Area -->
+        <div id="message" class="text-center p-3 rounded-lg font-medium mb-8 hidden"></div>
+
+        <!-- Results Area -->
+        <div id="results" class="space-y-4">
+            <!-- Results will be injected here by JavaScript -->
+            <div class="p-6 bg-gray-100 rounded-lg text-center text-gray-500 italic">
+                The step-by-step reduction will appear here after you run the routine.
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
